@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.bin
+*.pt
+*.pth
+checkpoints/
+tokenizer.json
+data/*.txt
+data/*.bin
+.DS_Store
+*.log
+wandb/
