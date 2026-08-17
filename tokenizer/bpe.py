@@ -166,9 +166,7 @@ class BPETrainer:
         # Step 2: Convert each chunk (string) to a list of bytes (integers 0-255)
         tokens = []
         for chunk in chunks:
-            token = []
-            for c in chunk:
-                token.append(ord(c))
+            token = list(chunk.encode('utf-8'))
             tokens.append(token)
 
         # Step 3: Initialize merges dict and base vocab

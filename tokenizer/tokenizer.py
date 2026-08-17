@@ -55,17 +55,20 @@ class Tokenizer:
 
         If merges and vocab are provided (from training), set them up.
         Otherwise, create an empty tokenizer (call load() to populate).
-
-        TODO: Implement this.
-            1. Store merges and vocab
-            2. Compile the regex pattern
-            3. Register special tokens:
-               - Start IDs at len(vocab) (or 256 if vocab is None)
-               - Create self.special_tokens = {"<|bos|>": id, ...}
-               - Create self.inverse_special = {id: "<|bos|>", ...}
-               - Add special tokens to vocab: vocab[id] = token_string.encode('utf-8')
         """
-        raise NotImplementedError("YOUR TURN: Initialize the tokenizer")
+        self.merges = merges if merges is not None else {}
+        self.vocab = vocab if vocab is not None else {}
+        self.pattern = regex.compile(GPT2_SPLIT_PATTERN)
+
+        # Register special tokens — IDs start after the BPE vocab
+        base_id = max(len(self.vocab), 256)
+        self.special_tokens = {}
+        self.inverse_special = {}
+        for i, token_str in enumerate(self.SPECIAL_TOKENS):
+            token_id = base_id + i
+            self.special_tokens[token_str] = token_id
+            self.inverse_special[token_id] = token_str
+            self.vocab[token_id] = token_str.encode("utf-8")
 
     def encode(self, text, add_bos=False, add_eos=False):
         """
@@ -78,28 +81,30 @@ class Tokenizer:
 
         Returns:
             list[int] — token IDs
-
-        ALGORITHM:
-        1. Handle special tokens first: check if any special token strings
-           appear in the text. If so, split around them and handle them separately.
-           (For simplicity, you can skip this initially and assume no special
-           tokens appear in the raw text.)
-        2. Pre-tokenize: split text using the regex pattern
-        3. For each chunk:
-           a. Convert to bytes: list(chunk.encode('utf-8'))
-           b. Apply merges in order: iterate through self.merges (which is ordered
-              by priority — first merge learned = highest priority)
-              - For each (pair, new_id), call merge(chunk_ids, pair, new_id)
-           c. Collect resulting token IDs
-        4. Prepend BOS / append EOS if requested
-        5. Return the full list of token IDs
-
-        TODO: Implement encoding.
-
-        HINT: The merges dict should be iterated in insertion order.
-        In Python 3.7+, dicts maintain insertion order.
         """
-        raise NotImplementedError("YOUR TURN: Implement encoding")
+        # Step 1: Pre-tokenize text into chunks using the regex
+        chunks = self.pattern.findall(text)
+
+        # Step 2: For each chunk, convert to bytes and apply merges
+        tokens = []
+        for chunk in chunks:
+            # Convert string to list of byte values (0-255)
+            token = list(chunk.encode("utf-8"))
+
+            # Apply every merge rule in priority order
+            for pair, new_id in self.merges.items():
+                token = merge(token, pair, new_id)
+
+            # Extend (not append!) to keep a flat list of IDs
+            tokens.extend(token)
+
+        # Step 3: Add BOS/EOS if requested
+        if add_bos:
+            tokens = [self.bos_id] + tokens
+        if add_eos:
+            tokens = tokens + [self.eos_id]
+
+        return tokens
 
     def decode(self, token_ids):
         """
@@ -110,17 +115,20 @@ class Tokenizer:
 
         Returns:
             str — decoded text
-
-        ALGORITHM:
-        1. For each token ID:
-           a. If it's a special token (in self.inverse_special), get the string
-           b. Otherwise, look up vocab[token_id] to get bytes
-        2. Concatenate all bytes
-        3. Decode to string: bytes_sequence.decode('utf-8', errors='replace')
-
-        TODO: Implement decoding.
         """
-        raise NotImplementedError("YOUR TURN: Implement decoding")
+        byte_pieces = []
+        for token_id in token_ids:
+            if token_id in self.inverse_special:
+                # Special token — encode its string to bytes
+                byte_pieces.append(self.inverse_special[token_id].encode("utf-8"))
+            elif token_id in self.vocab:
+                # Regular token — look up its byte sequence
+                byte_pieces.append(self.vocab[token_id])
+            else:
+                byte_pieces.append(b"?")
+
+        # Join all bytes and decode to string
+        return b"".join(byte_pieces).decode("utf-8", errors="replace")
 
     @property
     def vocab_size(self):
@@ -142,28 +150,49 @@ class Tokenizer:
     def save(self, path):
         """
         Save the tokenizer to a JSON file.
-
-        Save:
-            - merges: convert tuple keys to strings like "97,98"
-            - vocab: convert bytes values to lists of ints
-            - special_tokens: save as-is
-
-        TODO: Implement saving.
-
-        HINT: JSON can't have tuple keys, so convert (97, 98) → "97,98"
-        HINT: JSON can't have bytes values, so convert b'hello' → [104, 101, ...]
         """
-        raise NotImplementedError("YOUR TURN: Implement save")
+        # Convert merges: tuple keys → string keys (JSON can't have tuple keys)
+        merges_out = {}
+        for (a, b), new_id in self.merges.items():
+            merges_out[f"{a},{b}"] = new_id
+
+        # Convert vocab: bytes values → int lists (JSON can't have bytes)
+        vocab_out = {}
+        for token_id, byte_seq in self.vocab.items():
+            if token_id in self.inverse_special:
+                continue  # special tokens get reconstructed on load
+            vocab_out[str(token_id)] = list(byte_seq)
+
+        data = {
+            "merges": merges_out,
+            "vocab": vocab_out,
+            "special_tokens": self.special_tokens,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
 
     def load(self, path):
         """
         Load a tokenizer from a JSON file.
-
-        Reverse the save() process:
-            - Convert "97,98" keys back to (97, 98) tuples
-            - Convert int lists back to bytes
-            - Reconstruct special tokens
-
-        TODO: Implement loading.
         """
-        raise NotImplementedError("YOUR TURN: Implement load")
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Reconstruct merges: "97,98" → (97, 98)
+        self.merges = {}
+        for key_str, new_id in data["merges"].items():
+            a, b = key_str.split(",")
+            self.merges[(int(a), int(b))] = new_id
+
+        # Reconstruct vocab: string keys → int keys, int lists → bytes
+        self.vocab = {}
+        for token_id_str, byte_list in data["vocab"].items():
+            self.vocab[int(token_id_str)] = bytes(byte_list)
+
+        # Reconstruct special tokens
+        self.special_tokens = {}
+        self.inverse_special = {}
+        for token_str, token_id in data["special_tokens"].items():
+            self.special_tokens[token_str] = token_id
+            self.inverse_special[token_id] = token_str
+            self.vocab[token_id] = token_str.encode("utf-8")
