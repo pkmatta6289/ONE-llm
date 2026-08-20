@@ -31,3 +31,39 @@ To truly understand the architecture we're building (which matches the modern LL
 * **LLaMA: Open and Efficient Foundation Language Models** (Touvron et al., 2023)
   * **Why read it:** This paper brought all these specific pieces (RMSNorm, RoPE, SwiGLU) together into one single architecture. The model we are building is essentially a miniature LLaMA!
   * **Link:** https://arxiv.org/abs/2302.13971
+
+---
+
+## Important Papers to Learn in the Future
+
+Beyond the core architecture of ONE-LLM, these are the fundamental papers across modern AI that you should study next:
+
+### Foundational Architectures
+* **Attention Is All You Need** (Transformer)
+  * **Link:** https://arxiv.org/abs/1706.03762
+* **BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding**
+  * **Link:** https://arxiv.org/abs/1810.04805
+* **An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale** (Vision Transformer / ViT)
+  * **Link:** https://arxiv.org/abs/2010.11929
+
+### Fine-Tuning & Parameter Efficiency (PEFT)
+* **LoRA: Low-Rank Adaptation of Large Language Models**
+  * **Link:** https://arxiv.org/abs/2106.09685
+* **PEFT: State-of-the-art Parameter-Efficient Fine-Tuning methods** 
+  * **Link:** https://github.com/huggingface/peft (Concepts library)
+
+### Alignment & Generation
+* **Training language models to follow instructions with human feedback** (InstructGPT / RLHF)
+  * **Link:** https://arxiv.org/abs/2203.02155
+* **Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks** (RAG)
+  * **Link:** https://arxiv.org/abs/2005.11401
+
+### Advanced Scaling & Routing
+* **Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer** (MoE)
+  * **Link:** https://arxiv.org/abs/1701.06538
+
+### Generative Paradigms
+* **Generative Adversarial Nets** (GAN)
+  * **Link:** https://arxiv.org/abs/1406.2661
+* **Denoising Diffusion Probabilistic Models** (Diffusion)
+  * **Link:** https://arxiv.org/abs/2006.11239

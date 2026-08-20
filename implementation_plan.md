@@ -1,4 +1,4 @@
-# ONE-LLM: Build a Modern LLM from Scratch — First Principles
+s # ONE-LLM: Build a Modern LLM from Scratch — First Principles
 
 You've built GPT-2 from tutorials. Now we build something **better** — a modern decoder-only LLM incorporating every major architectural advance since GPT-2 (2019), implemented from first principles in pure PyTorch, trainable on a single GPU.
 
