@@ -9,6 +9,7 @@ tiktoken>=0.5.0
 # Data
 requests>=2.31.0
 tqdm>=4.65.0
+datasets>=2.14.0
 
 # Config
 pyyaml>=6.0
